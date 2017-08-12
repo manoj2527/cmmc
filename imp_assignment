@@ -84,4 +84,5 @@
   (draw ((repeated gosper-step level) c)))) 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
- using this for git testing
+ using this for git testing 
+ here it is for clone testing
