@@ -1,0 +1,85 @@
+#lang racket
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(require plot)
+(plot-new-window? #t)
+(plot-width 900)
+(plot-height 900)
+(define (draw curve)
+(plot (parametric
+(lambda (t) (vector
+(x-of (curve t))
+(y-of (curve t))))
+0 1 #:width 1 #:samples 500
+#:x-min -1.5 #:x-max 1.5
+#:y-min -1.5 #:y-max 1.5)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (make-point x y)
+  (lambda(bit) (if(zero? bit) x y)))
+(define (x-of point)
+  (point 0))
+(define (y-of point)
+  (point 1))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (unit-line-at y)
+(lambda (t) (make-point t y)))
+(define unit-line (unit-line-at 0))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (line x)
+  (lambda(t) (make-point x t)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (vertical-line p l)
+  (lambda (t) (make-point (x-of p) (- (y-of p) (* t l)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (pi/2rot curve)
+  (lambda(t)
+    (let ((ct (curve t)))
+      (make-point (- 0 (y-of ct)) (x-of ct)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (reflect-through-y-axis curve)
+  (lambda(t)
+    (let ((ct (curve t)))
+      (make-point (- 0 (x-of ct)) (y-of ct)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (translate x y curve)
+  (lambda(t)
+    (let ((ct (curve t)))
+      (make-point (+ x (x-of ct)) (+ y (y-of ct))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (scale x y curve)
+  (lambda (t)
+    (let ((ct (curve t)))
+      (make-point (* (x-of ct) x) (* (y-of ct) y)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (rotate-around-origin radians curve)
+  (lambda (t)
+  (let ((ct (curve t)))
+    (make-point (- (* (x-of ct) (cos radians)) (* (y-of ct) (sin radians)))
+                (+ (* (y-of ct) (cos radians)) (* (x-of ct) (sin radians)))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (put-in-standard-position curve)
+     (let* ((c1 (translate (- (x-of (curve 0))) (- (y-of (curve 0))) curve))
+            (rad (atan  (y-of (c1 1)) (x-of (c1 1))))
+            (c2 (rotate-around-origin (- rad) c1))
+            (x1 (x-of (c2 1))))
+       (scale (/ 1 x1) (/ 1 x1) c2)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (connect-ends curve1 curve2)
+  (lambda (t)
+    (let* ((c1 (translate (- (x-of (curve1 1)) (x-of (curve2 0)))
+                          (- (y-of (curve1 1)) (y-of (curve2 0))) curve2)))
+      (if (< t (/ 1 2)) (curve1 (* 2 t)) (c1 (- (* 2 t) 1))))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (gosper-step curve)
+  
+  (put-in-standard-position (connect-ends (rotate-around-origin (/ pi 4) curve) (rotate-around-origin (- (/ pi 4)) curve))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (compose f g)
+ (lambda (x) (f (g x))))
+(define (repeated f n)
+(if (= n 1) f
+(compose f (repeated f (- n 1)))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (gosper-curve level)
+  (lambda (c)
+  (draw ((repeated gosper-step level) c)))) 
+            
