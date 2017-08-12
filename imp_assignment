@@ -82,4 +82,6 @@
 (define (gosper-curve level)
   (lambda (c)
   (draw ((repeated gosper-step level) c)))) 
-            
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  
+ using this for git testing
